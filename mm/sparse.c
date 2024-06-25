@@ -255,12 +255,18 @@ void __init subsection_map_init(unsigned long pfn, unsigned long nr_pages)
 }
 
 /* Record a memory area against a node. */
+/*
+*start--memblock.memory的起始页帧号。这里有个疑问，start是用PFN_UP计算出来的，比如
+        memory的起始地址是0x1,对应的页帧号PFN=0，使用PFN_UP(0x1) = 1, PFN=0中对应的一部分内存不要了？
+*end    memblock.memory的结束页帧号
+*/
 void __init memory_present(int nid, unsigned long start, unsigned long end)
 {
 	unsigned long pfn;
 
 #ifdef CONFIG_SPARSEMEM_EXTREME
 	if (unlikely(!mem_section)) {
+		//如果全局变量mem_section为空，则分配内存
 		unsigned long size, align;
 
 		size = sizeof(struct mem_section*) * NR_SECTION_ROOTS;
@@ -278,10 +284,11 @@ void __init memory_present(int nid, unsigned long start, unsigned long end)
 		unsigned long section = pfn_to_section_nr(pfn);
 		struct mem_section *ms;
 
-		sparse_index_init(section, nid);
+		sparse_index_init(section, nid);//上面已经分配了mem_section第一维的空间，这个函数分配第二维空间
 		set_section_nid(section, nid);
 
 		ms = __nr_to_section(section);
+		//设置该section的online标志和node id值
 		if (!ms->section_mem_map) {
 			ms->section_mem_map = sparse_encode_early_nid(nid) |
 							SECTION_IS_ONLINE;
@@ -295,10 +302,14 @@ void __init memory_present(int nid, unsigned long start, unsigned long end)
  * convienence function that is useful for a number of arches
  * to mark all of the systems memory as present during initialization.
  */
+/*
+* memblock.memory已经记录了当前内存条信息，但对应的section结构体还没有创建。
+* 这个函数的主要作用就是扫描memblock.memory，创建对应的section
+*/
 void __init memblocks_present(void)
 {
 	struct memblock_region *reg;
-
+	
 	for_each_memblock(memory, reg) {
 		memory_present(memblock_get_region_node(reg),
 			       memblock_region_memory_base_pfn(reg),

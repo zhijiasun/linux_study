@@ -485,7 +485,7 @@ phys_addr_t memblock_get_current_limit(void);
  */
 static inline unsigned long memblock_region_memory_base_pfn(const struct memblock_region *reg)
 {
-	return PFN_UP(reg->base);
+	return PFN_UP(reg->base);//PFN_UP返回地址x下一个页的页帧号，比如地址x对应的PFN是m, PFN_UP(x)返回的是m+1
 }
 
 /**
@@ -496,7 +496,7 @@ static inline unsigned long memblock_region_memory_base_pfn(const struct membloc
  */
 static inline unsigned long memblock_region_memory_end_pfn(const struct memblock_region *reg)
 {
-	return PFN_DOWN(reg->base + reg->size);
+	return PFN_DOWN(reg->base + reg->size);//PFN_DOWN返回的是地址x所在页的页帧号
 }
 
 /**
