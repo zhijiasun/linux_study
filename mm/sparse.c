@@ -595,16 +595,16 @@ void __init sparse_init(void)
 
 	/* Setup pageblock_order for HUGETLB_PAGE_SIZE_VARIABLE */
 	set_pageblock_order();
-
+	//遍历所有的mem_section
 	for_each_present_section_nr(pnum_begin + 1, pnum_end) {
-		int nid = sparse_early_nid(__nr_to_section(pnum_end));
+		int nid = sparse_early_nid(__nr_to_section(pnum_end));//获取当前section的node id
 
 		if (nid == nid_begin) {
-			map_count++;
+			map_count++;//node id相同，map_count++,用于计算当前node一共有多少个section
 			continue;
 		}
 		/* Init node with sections in range [pnum_begin, pnum_end) */
-		sparse_init_nid(nid_begin, pnum_begin, pnum_end, map_count);
+		sparse_init_nid(nid_begin, pnum_begin, pnum_end, map_count);//node_id,起始section index，结束section index，和一共有多少个section：map_count
 		nid_begin = nid;
 		pnum_begin = pnum_end;
 		map_count = 1;
