@@ -117,6 +117,19 @@ void __init setup_dma_zone(const struct machine_desc *mdesc)
 #endif
 }
 
+/*
+*struct zone{
+*	atomic_long_t		managed_pages; //被Buddy System管理的页面数量
+*	unsigned long		spanned_pages; //ZONE中总共的页面数，包含空洞的区域
+*	unsigned long		present_pages; //ZONE里实际管理的页面数量
+*  
+*}
+*三者的关系为：
+* spanned_pages = zone_end_pfn - zone_start_pfn;
+* present_pages = spanned_pages - absent_pages(pages in holes);
+* managed_pages = present_pages - reserved_pages;
+* 结构体中，没有absent_pages这个变量，我理解这个就是下面函数中计算的zhole_size
+*/
 static void __init zone_sizes_init(unsigned long min, unsigned long max_low,
 	unsigned long max_high)
 {
@@ -288,6 +301,11 @@ void __init bootmem_init(void)
 {
 	memblock_allow_resize();
 
+	//物理内存开始帧号min_low_pfn、结束帧号max_pfn、NORMAL区域的结束帧号max_low_pfn。通过全局变量memblock获取信息
+	//max_low_pfn也可以理解为高端内存的起始物理地址，max_pfn是高端内存的结束地址
+	/*
+	*|min_low_pfn---------------------------------max_low_pfn|-----------------------max_high_pfn|
+	*/
 	find_limits(&min_low_pfn, &max_low_pfn, &max_pfn);
 
 	early_memtest((phys_addr_t)min_low_pfn << PAGE_SHIFT,
@@ -309,6 +327,7 @@ void __init bootmem_init(void)
 	 * the sparse mem_map arrays initialized by sparse_init()
 	 * for memmap_init_zone(), otherwise all PFNs are invalid.
 	 */
+	 //从min_low_pfn到max_low_pfn是ZONE_NORMAL，max_low_pfn到max_pfn是ZONE_HIGHMEM。
 	zone_sizes_init(min_low_pfn, max_low_pfn, max_pfn);
 }
 
