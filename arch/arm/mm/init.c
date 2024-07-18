@@ -133,6 +133,7 @@ void __init setup_dma_zone(const struct machine_desc *mdesc)
 static void __init zone_sizes_init(unsigned long min, unsigned long max_low,
 	unsigned long max_high)
 {
+	//zone_size 表示zone中page的数量,zhole_size表示zone中空洞页面的数量
 	unsigned long zone_size[MAX_NR_ZONES], zhole_size[MAX_NR_ZONES];
 	struct memblock_region *reg;
 
@@ -146,17 +147,18 @@ static void __init zone_sizes_init(unsigned long min, unsigned long max_low,
 	 * to do anything fancy with the allocation of this memory
 	 * to the zones, now is the time to do it.
 	 */
-	zone_size[0] = max_low - min;
+	zone_size[0] = max_low - min;//计算低端内存的页面数量
 #ifdef CONFIG_HIGHMEM
-	zone_size[ZONE_HIGHMEM] = max_high - max_low;
+	zone_size[ZONE_HIGHMEM] = max_high - max_low;//计算高端内存页面数量，如果物理内存大小没有超过lowmen，这里计算的结果是0
 #endif
 
 	/*
 	 * Calculate the size of the holes.
 	 *  holes = node_size - sum(bank_sizes)
 	 */
-	memcpy(zhole_size, zone_size, sizeof(zhole_size));
+	memcpy(zhole_size, zone_size, sizeof(zhole_size));//zone_size赋值给zhole_size
 	for_each_memblock(memory, reg) {
+		//遍历memblock.memory数组，根据zone_size 页面数量减去各个memory中可用的page数量，剩下的就是空洞页面的数量了
 		unsigned long start = memblock_region_memory_base_pfn(reg);
 		unsigned long end = memblock_region_memory_end_pfn(reg);
 
